@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { isSecondaryTouch } from "./controls";
 import { closeLasso, distance, polygonCentroid } from "./geometry";
 import { loadLeaderboard, normalizeName, saveScore } from "./leaderboard";
 import { RoundModel } from "./model";
@@ -100,6 +101,7 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     this.load.setPath("assets");
     this.load.image("title", "TitleScreen.png");
+    this.load.image("title-controls", "TitleScreenControls.png");
     this.load.image("lot", "ParkingLot.png");
     this.load.image("gameover", "game_over.png");
     this.load.image("highscores", "high_scores.png");
@@ -273,7 +275,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
-    if (pointer !== this.input.pointer1 && this.screen === "play") {
+    if (isSecondaryTouch(pointer) && this.screen === "play") {
       this.togglePause();
       return;
     }
@@ -282,7 +284,7 @@ export class GameScene extends Phaser.Scene {
       if (point.x > 12 && point.x < 105 && point.y > 423 && point.y < 475) {
         this.resetGame();
         this.showLevelStart();
-      } else if (point.x > 245 && point.x < 360 && point.y > 423 && point.y < 475) {
+      } else if (point.x > 120 && point.x < 245 && point.y > 423 && point.y < 475) {
         this.showHighScores();
       }
       return;
@@ -436,7 +438,13 @@ export class GameScene extends Phaser.Scene {
   private showTitle(): void {
     this.clearScreen();
     this.screen = "title";
-    this.setBackground("title");
+    this.setBackground("title-controls", true);
+    const originalArt = this.add
+      .image(0, 0, "title")
+      .setOrigin(0)
+      .setCrop(0, 0, 640, 406)
+      .setDepth(1);
+    this.ui.push(originalArt);
     this.playMusic("intro", 1);
   }
 
@@ -567,9 +575,10 @@ export class GameScene extends Phaser.Scene {
     return line;
   }
 
-  private setBackground(key: string): void {
+  private setBackground(key: string, fitCanvas = false): void {
     this.background?.destroy();
     this.background = this.add.image(0, 0, key).setOrigin(0).setDepth(0);
+    if (fitCanvas) this.background.setDisplaySize(640, 480);
   }
 
   private clearScreen(): void {

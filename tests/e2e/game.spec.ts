@@ -31,6 +31,6 @@ test("loads a local leaderboard without a server", async ({ page }) => {
   const canvas = page.locator("canvas");
   const box = await canvas.boundingBox();
   if (!box) throw new Error("Canvas was not rendered");
-  await page.mouse.click(box.x + box.width * 0.47, box.y + box.height * 0.94);
+  await page.mouse.click(box.x + box.width * 0.29, box.y + box.height * 0.94);
   await expect(canvas).toBeVisible();
 });
