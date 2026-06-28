@@ -6,6 +6,27 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test("draws a lasso on the title screen", async ({ page }) => {
+  await page.goto("/");
+  const canvas = page.locator("canvas");
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("Canvas was not rendered");
+  const point = (x: number, y: number): [number, number] => [
+    box.x + box.width * (x / 640),
+    box.y + box.height * (y / 480),
+  ];
+  await page.mouse.move(...point(400, 200));
+  const before = await canvas.screenshot();
+  await page.mouse.down();
+  await page.mouse.move(...point(450, 200), { steps: 10 });
+  await page.mouse.move(...point(450, 250), { steps: 10 });
+  await page.mouse.move(...point(400, 250), { steps: 10 });
+  await page.mouse.move(...point(400, 200), { steps: 10 });
+  await page.mouse.up();
+  const after = await canvas.screenshot();
+  expect(after.equals(before)).toBe(false);
+});
+
 test("opens the title and starts a round", async ({ page }) => {
   await page.goto("/");
   const canvas = page.locator("canvas");

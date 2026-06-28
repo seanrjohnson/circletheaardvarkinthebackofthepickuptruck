@@ -101,7 +101,7 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     this.load.setPath("assets");
     this.load.image("title", "TitleScreen.png");
-    this.load.image("title-controls", "TitleScreenControls.png");
+    this.load.image("title-controls", "TitleScreenControls-v2.png");
     this.load.image("lot", "ParkingLot.png");
     this.load.image("gameover", "game_over.png");
     this.load.image("highscores", "high_scores.png");
@@ -201,7 +201,12 @@ export class GameScene extends Phaser.Scene {
     keyboard.on("keydown-P", () => this.screen === "play" && this.togglePause());
     keyboard.on("keydown-ESC", () => this.screen === "play" && this.togglePause());
     keyboard.on("keydown-SPACE", (event: KeyboardEvent) => {
-      if (event.repeat || this.screen !== "play" || this.paused) return;
+      if (
+        event.repeat ||
+        !["title", "play"].includes(this.screen) ||
+        (this.screen === "play" && this.paused)
+      )
+        return;
       event.preventDefault();
       this.keyboardDrawing = !this.keyboardDrawing;
       this.currentLasso = this.keyboardDrawing ? [this.pointerPoint(this.input.activePointer)] : [];
@@ -216,23 +221,25 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, rawDelta: number): void {
     const pointer = this.input.activePointer;
     this.cursor?.setPosition(pointer.x, pointer.y).setVisible(!pointer.wasTouch);
-    if (this.keyboardDrawing && this.screen === "play" && !this.paused) {
+    if (this.keyboardDrawing && ["title", "play"].includes(this.screen) && !this.paused) {
       this.addLassoPoint(this.pointerPoint(pointer));
     }
     if (this.screen === "gameover" && this.nameInput?.value !== this.renderedName) {
       this.renderedName = this.nameInput?.value ?? "";
       this.renderGameOverText();
     }
+    const delta = Math.min(rawDelta, 100);
+    if ((this.screen === "title" || this.screen === "play") && !this.paused) {
+      for (const trail of this.trails) trail.remainingMs -= delta;
+      this.trails = this.trails.filter((trail) => trail.remainingMs > 0);
+    }
     if (this.screen !== "play" || this.paused || !this.model) {
       this.drawLassos();
       return;
     }
 
-    const delta = Math.min(rawDelta, 100);
     this.roundRemainingMs -= delta;
     this.scoreMessageRemainingMs = Math.max(0, this.scoreMessageRemainingMs - delta);
-    for (const trail of this.trails) trail.remainingMs -= delta;
-    this.trails = this.trails.filter((trail) => trail.remainingMs > 0);
 
     for (const event of this.model.update(delta)) {
       if (event.type === "timedout" && this.level >= 5 && event.target.targetClass === "points") {
@@ -286,6 +293,8 @@ export class GameScene extends Phaser.Scene {
         this.showLevelStart();
       } else if (point.x > 120 && point.x < 245 && point.y > 423 && point.y < 475) {
         this.showHighScores();
+      } else {
+        this.currentLasso = [point];
       }
       return;
     }
@@ -325,7 +334,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {
-    if (this.screen !== "play" || this.paused) return;
+    if (!["title", "play"].includes(this.screen) || this.paused) return;
     if (pointer.isDown || this.keyboardDrawing) this.addLassoPoint(this.pointerPoint(pointer));
   }
 
@@ -344,6 +353,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private completeLasso(polygon: Point[]): void {
+    if (this.screen === "title") {
+      this.trails.push({
+        points: polygon,
+        color: Phaser.Display.Color.RandomRGB().color,
+        remainingMs: 2500,
+      });
+      return;
+    }
     if (!this.model) return;
     const targets = this.model.circle(polygon);
     const result = scoreTargets(this.score, this.lives, this.level, targets);
