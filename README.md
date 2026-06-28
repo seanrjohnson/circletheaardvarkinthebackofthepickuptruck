@@ -2,6 +2,10 @@
 
 A browser port of the original Monkey X game. Circle aardvarks in pickup trucks, avoid Otto von Bismarck, and watch for disguises in later levels.
 
+![Screenshot of the title screen](public/assets/TitleScreenControls-v2.png)
+
+![Screenshot of gameplay](media/screenshot.jpg)
+
 ## Development
 
 ```sh
