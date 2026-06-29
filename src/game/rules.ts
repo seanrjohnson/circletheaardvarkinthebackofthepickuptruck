@@ -4,6 +4,13 @@ export const STARTING_LIVES = 3;
 export const MAX_LIVES = 8;
 export const ROUND_TIME_MS = 40_000;
 
+export function missesRequiredForLifeLoss(level: number): number | undefined {
+  if (level < 7) return undefined;
+  if (level < 9) return 3;
+  if (level < 12) return 2;
+  return 1;
+}
+
 export const TARGETS: Record<TargetType, TargetDefinition> = {
   aardvark: { type: "aardvark", targetClass: "points", points: 50, multiplier: 1 },
   bismarck: { type: "bismarck", targetClass: "bad", points: 0, multiplier: 0.75 },

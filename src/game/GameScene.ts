@@ -3,7 +3,7 @@ import { isSecondaryTouch } from "./controls";
 import { closeLasso, distance, polygonCentroid } from "./geometry";
 import { loadLeaderboard, normalizeName, saveScore } from "./leaderboard";
 import { RoundModel } from "./model";
-import { ROUND_TIME_MS, STARTING_LIVES, scoreTargets } from "./rules";
+import { ROUND_TIME_MS, STARTING_LIVES, missesRequiredForLifeLoss, scoreTargets } from "./rules";
 import type { Point, Slot, TargetType } from "./types";
 
 type Screen = "title" | "start" | "play" | "end" | "gameover" | "highscores";
@@ -89,6 +89,7 @@ export class GameScene extends Phaser.Scene {
   private lastScore = 0;
   private scoreMessageRemainingMs = 0;
   private scoreMessageCenter: Point = { x: 320, y: 240 };
+  private missedPointTargets = 0;
   private lastRenderedHud = "";
   private nameInput?: HTMLInputElement;
   private renderedName = "";
@@ -242,10 +243,14 @@ export class GameScene extends Phaser.Scene {
     this.scoreMessageRemainingMs = Math.max(0, this.scoreMessageRemainingMs - delta);
 
     for (const event of this.model.update(delta)) {
-      if (event.type === "timedout" && this.level >= 5 && event.target.targetClass === "points") {
-        this.lives = Math.max(0, this.lives - 1);
-        this.playEffect("buzz");
-      }
+      if (event.type !== "timedout" || event.target.targetClass !== "points") continue;
+      const missesRequired = missesRequiredForLifeLoss(this.level);
+      if (!missesRequired) continue;
+      this.missedPointTargets += 1;
+      if (this.missedPointTargets < missesRequired) continue;
+      this.missedPointTargets = 0;
+      this.lives = Math.max(0, this.lives - 1);
+      this.playEffect("buzz");
     }
     this.syncTargets();
     this.renderHud();
@@ -480,6 +485,7 @@ export class GameScene extends Phaser.Scene {
     this.setBackground("lot");
     this.model = new RoundModel(this.level);
     this.roundRemainingMs = ROUND_TIME_MS;
+    this.missedPointTargets = 0;
     this.lastScore = 0;
     this.lastRenderedHud = "";
     this.playMusic("main", 0.2);

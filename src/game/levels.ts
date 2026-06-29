@@ -59,35 +59,38 @@ export function getLevelConfiguration(level: number): LevelConfiguration {
         ["bonus_points", 5],
         ["life", 5],
       ),
-      spawnTimesMs: weighted([300, 10], [400, 50], [800, 30], [1800, 10]),
-      activeTimesMs: lateActive,
+      spawnTimesMs: weighted([400, 10], [550, 50], [1000, 30], [2100, 10]),
+      activeTimesMs: weighted([1000, 10], [1600, 15], [3800, 50], [4800, 15], [6800, 10]),
     },
   };
   if (level <= 5) return configs[Math.max(1, level)]!;
 
-  const scale = 1 / (1 + (2 * (level - 5)) / 10);
-  const scaled = (value: number): number => Math.max(16, Math.trunc(value * scale));
+  // Difficulty increases forever but approaches a playable timing floor instead of zero.
+  const scale = 0.55 + 0.45 * Math.exp(-0.08 * (level - 6));
+  const scaled = (value: number): number => Math.trunc(value * scale);
+  const bismarckBoost = Math.min(7, Math.floor((level - 6) / 3));
+  const disguiseBoost = Math.min(4, Math.floor((level - 6) / 5));
   return {
     targets: weighted<TargetType>(
-      ["aardvark", 45],
-      ["bismarck", 30],
+      ["aardvark", 49 - bismarckBoost - disguiseBoost],
+      ["bismarck", 28 + bismarckBoost],
       ["bisvark", 5],
-      ["aardmarck", 10],
+      ["aardmarck", 8 + disguiseBoost],
       ["bonus_points", 5],
       ["life", 5],
     ),
     spawnTimesMs: weighted(
-      [scaled(300), 10],
-      [scaled(400), 50],
-      [scaled(800), 30],
-      [scaled(1800), 10],
+      [scaled(350), 10],
+      [scaled(500), 50],
+      [scaled(900), 30],
+      [scaled(1900), 10],
     ),
     activeTimesMs: weighted(
-      [scaled(800), 10],
-      [scaled(1300), 15],
-      [scaled(3000), 50],
-      [scaled(4000), 15],
-      [scaled(6000), 10],
+      [scaled(900), 10],
+      [scaled(1450), 15],
+      [scaled(3400), 50],
+      [scaled(4400), 15],
+      [scaled(6400), 10],
     ),
   };
 }

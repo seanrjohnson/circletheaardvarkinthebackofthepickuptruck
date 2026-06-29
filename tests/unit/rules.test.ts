@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_LIVES, TARGETS, scoreTargets } from "../../src/game/rules";
+import { MAX_LIVES, TARGETS, missesRequiredForLifeLoss, scoreTargets } from "../../src/game/rules";
 
 describe("scoring", () => {
   it("rewards grouped aardvarks by count and level", () => {
@@ -20,5 +20,15 @@ describe("scoring", () => {
 
   it("caps extra lives", () => {
     expect(scoreTargets(0, MAX_LIVES, 1, [TARGETS.life]).lives).toBe(MAX_LIVES);
+  });
+});
+
+describe("miss penalties", () => {
+  it("introduces missed-target life loss gradually", () => {
+    expect(missesRequiredForLifeLoss(5)).toBeUndefined();
+    expect(missesRequiredForLifeLoss(6)).toBeUndefined();
+    expect(missesRequiredForLifeLoss(7)).toBe(3);
+    expect(missesRequiredForLifeLoss(9)).toBe(2);
+    expect(missesRequiredForLifeLoss(12)).toBe(1);
   });
 });
