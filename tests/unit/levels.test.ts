@@ -33,16 +33,30 @@ describe("level configuration", () => {
       entries.reduce((sum, entry) => sum + entry.weight, 0);
     expect(weightedAverage(level.spawnTimesMs)).toBe(825);
     expect(weightedAverage(level.activeTimesMs)).toBe(3640);
+    expect(level.targets.find((entry) => entry.value === "life")!.weight).toBe(10);
   });
 
   it("increases late difficulty gradually with a playable timing floor", () => {
     const level6 = getLevelConfiguration(6);
+    const level19 = getLevelConfiguration(19);
     const level20 = getLevelConfiguration(20);
     const level1000 = getLevelConfiguration(1000);
     expect(level20.spawnTimesMs[1]!.value).toBeLessThan(level6.spawnTimesMs[1]!.value);
     expect(level1000.spawnTimesMs[0]!.value).toBeGreaterThanOrEqual(190);
-    expect(level20.targets.find((entry) => entry.value === "bismarck")!.weight).toBeGreaterThan(
+    expect(level19.targets.find((entry) => entry.value === "bismarck")!.weight).toBeGreaterThan(
       level6.targets.find((entry) => entry.value === "bismarck")!.weight,
+    );
+  });
+
+  it("makes recovery rounds slower and more generous", () => {
+    const level9 = getLevelConfiguration(9);
+    const level10 = getLevelConfiguration(10);
+    expect(level10.spawnTimesMs[1]!.value).toBeGreaterThan(level9.spawnTimesMs[1]!.value);
+    expect(level10.activeTimesMs[2]!.value).toBeGreaterThan(level9.activeTimesMs[2]!.value);
+    expect(level10.targets.find((entry) => entry.value === "life")!.weight).toBe(10);
+    expect(level10.targets.find((entry) => entry.value === "bonus_points")!.weight).toBe(10);
+    expect(level10.targets.find((entry) => entry.value === "bismarck")!.weight).toBeLessThan(
+      level9.targets.find((entry) => entry.value === "bismarck")!.weight,
     );
   });
 });

@@ -1,4 +1,5 @@
 import type { LevelConfiguration, TargetType, Weighted } from "./types";
+import { isRecoveryRound } from "./rules";
 
 export function weightedPick<T>(values: Array<Weighted<T>>, random = Math.random): T {
   const total = values.reduce((sum, item) => sum + Math.abs(item.weight), 0);
@@ -52,12 +53,12 @@ export function getLevelConfiguration(level: number): LevelConfiguration {
     },
     5: {
       targets: weighted<TargetType>(
-        ["aardvark", 50],
+        ["aardvark", 45],
         ["bismarck", 25],
         ["bisvark", 7],
         ["aardmarck", 8],
         ["bonus_points", 5],
-        ["life", 5],
+        ["life", 10],
       ),
       spawnTimesMs: weighted([400, 10], [550, 50], [1000, 30], [2100, 10]),
       activeTimesMs: weighted([1000, 10], [1600, 15], [3800, 50], [4800, 15], [6800, 10]),
@@ -67,30 +68,44 @@ export function getLevelConfiguration(level: number): LevelConfiguration {
 
   // Difficulty increases forever but approaches a playable timing floor instead of zero.
   const scale = 0.55 + 0.45 * Math.exp(-0.08 * (level - 6));
-  const scaled = (value: number): number => Math.trunc(value * scale);
   const bismarckBoost = Math.min(7, Math.floor((level - 6) / 3));
   const disguiseBoost = Math.min(4, Math.floor((level - 6) / 5));
+  const recoveryRound = isRecoveryRound(level);
+  const timingScale = recoveryRound ? scale * 1.15 : scale;
+  const recoveryBismarckBoost = Math.floor(bismarckBoost / 2);
+  const recoveryDisguiseBoost = Math.floor(disguiseBoost / 2);
+  const targets = recoveryRound
+    ? weighted<TargetType>(
+        ["aardvark", 45 - recoveryBismarckBoost - recoveryDisguiseBoost],
+        ["bismarck", 24 + recoveryBismarckBoost],
+        ["bisvark", 5],
+        ["aardmarck", 6 + recoveryDisguiseBoost],
+        ["bonus_points", 10],
+        ["life", 10],
+      )
+    : weighted<TargetType>(
+        ["aardvark", 49 - bismarckBoost - disguiseBoost],
+        ["bismarck", 28 + bismarckBoost],
+        ["bisvark", 5],
+        ["aardmarck", 8 + disguiseBoost],
+        ["bonus_points", 5],
+        ["life", 5],
+      );
+  const scaledForRound = (value: number): number => Math.trunc(value * timingScale);
   return {
-    targets: weighted<TargetType>(
-      ["aardvark", 49 - bismarckBoost - disguiseBoost],
-      ["bismarck", 28 + bismarckBoost],
-      ["bisvark", 5],
-      ["aardmarck", 8 + disguiseBoost],
-      ["bonus_points", 5],
-      ["life", 5],
-    ),
+    targets,
     spawnTimesMs: weighted(
-      [scaled(350), 10],
-      [scaled(500), 50],
-      [scaled(900), 30],
-      [scaled(1900), 10],
+      [scaledForRound(350), 10],
+      [scaledForRound(500), 50],
+      [scaledForRound(900), 30],
+      [scaledForRound(1900), 10],
     ),
     activeTimesMs: weighted(
-      [scaled(900), 10],
-      [scaled(1450), 15],
-      [scaled(3400), 50],
-      [scaled(4400), 15],
-      [scaled(6400), 10],
+      [scaledForRound(900), 10],
+      [scaledForRound(1450), 15],
+      [scaledForRound(3400), 50],
+      [scaledForRound(4400), 15],
+      [scaledForRound(6400), 10],
     ),
   };
 }

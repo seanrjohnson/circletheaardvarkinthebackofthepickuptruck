@@ -21,9 +21,10 @@ test("draws a lasso on the title screen", async ({ page }) => {
   await page.mouse.move(...point(450, 200), { steps: 10 });
   await page.mouse.move(...point(450, 250), { steps: 10 });
   await page.mouse.move(...point(400, 250), { steps: 10 });
-  await page.mouse.move(...point(400, 200), { steps: 10 });
-  await page.mouse.up();
+  await page.mouse.move(...point(425, 175), { steps: 10 });
+  await page.waitForTimeout(100);
   const after = await canvas.screenshot();
+  await page.mouse.up();
   expect(after.equals(before)).toBe(false);
 });
 

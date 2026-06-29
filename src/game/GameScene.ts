@@ -3,7 +3,13 @@ import { isSecondaryTouch } from "./controls";
 import { closeLasso, distance, polygonCentroid } from "./geometry";
 import { loadLeaderboard, normalizeName, saveScore } from "./leaderboard";
 import { RoundModel } from "./model";
-import { ROUND_TIME_MS, STARTING_LIVES, missesRequiredForLifeLoss, scoreTargets } from "./rules";
+import {
+  ROUND_TIME_MS,
+  STARTING_LIVES,
+  isRecoveryRound,
+  missesRequiredForLifeLoss,
+  scoreTargets,
+} from "./rules";
 import type { Point, Slot, TargetType } from "./types";
 
 type Screen = "title" | "start" | "play" | "end" | "gameover" | "highscores";
@@ -440,6 +446,17 @@ export class GameScene extends Phaser.Scene {
       target.type === "aardmarck" ? -11 : ["life", "bonus_points"].includes(target.type) ? -5 : 0;
     const sprite = this.add.sprite(slot.x, slot.y + yOffset, texture).setDepth(2);
     if (animation) sprite.play(animation);
+    if (state === "active" && target.type === "life") {
+      sprite.setScale(1.15);
+      this.tweens.add({
+        targets: sprite,
+        scale: 1.4,
+        duration: 400,
+        ease: "Sine.InOut",
+        yoyo: true,
+        repeat: -1,
+      });
+    }
     return sprite;
   }
 
@@ -557,7 +574,7 @@ export class GameScene extends Phaser.Scene {
 
   private renderHud(): void {
     const seconds = Math.max(0, Math.ceil(this.roundRemainingMs / 1000));
-    const signature = `${seconds}:${this.score}:${this.lives}:${this.scoreMessageRemainingMs > 0}`;
+    const signature = `${seconds}:${this.score}:${this.lives}:${this.missedPointTargets}:${this.scoreMessageRemainingMs > 0}`;
     if (signature === this.lastRenderedHud) return;
     this.lastRenderedHud = signature;
     this.ui.splice(0).forEach((object) => object.destroy());
@@ -565,6 +582,12 @@ export class GameScene extends Phaser.Scene {
     this.addLine(String(seconds).padStart(2, "0"), 5, 5, 2);
     this.addLine(String(this.score), 630, 5, 2, "font-outline", true);
     this.addLine(`Level:${this.level}`, 475, 455, 2);
+    const missesRequired = missesRequiredForLifeLoss(this.level);
+    if (isRecoveryRound(this.level)) {
+      this.addLine("RECOVERY ROUND", 320, 5, 1.5, "font-blue", true);
+    } else if (missesRequired) {
+      this.addLine(`MISSES:${this.missedPointTargets}/${missesRequired}`, 5, 405, 1.5, "font-red");
+    }
     for (let index = 0; index < this.lives; index += 1) {
       this.hearts.push(
         this.add

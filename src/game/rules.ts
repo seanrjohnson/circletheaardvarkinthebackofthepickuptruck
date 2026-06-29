@@ -4,8 +4,12 @@ export const STARTING_LIVES = 3;
 export const MAX_LIVES = 8;
 export const ROUND_TIME_MS = 40_000;
 
+export function isRecoveryRound(level: number): boolean {
+  return level >= 5 && level % 5 === 0;
+}
+
 export function missesRequiredForLifeLoss(level: number): number | undefined {
-  if (level < 7) return undefined;
+  if (level < 7 || isRecoveryRound(level)) return undefined;
   if (level < 9) return 3;
   if (level < 12) return 2;
   return 1;

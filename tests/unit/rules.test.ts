@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { MAX_LIVES, TARGETS, missesRequiredForLifeLoss, scoreTargets } from "../../src/game/rules";
+import {
+  MAX_LIVES,
+  TARGETS,
+  isRecoveryRound,
+  missesRequiredForLifeLoss,
+  scoreTargets,
+} from "../../src/game/rules";
 
 describe("scoring", () => {
   it("rewards grouped aardvarks by count and level", () => {
@@ -19,6 +25,7 @@ describe("scoring", () => {
   });
 
   it("caps extra lives", () => {
+    expect(scoreTargets(0, 3, 1, [TARGETS.life]).lives).toBe(4);
     expect(scoreTargets(0, MAX_LIVES, 1, [TARGETS.life]).lives).toBe(MAX_LIVES);
   });
 });
@@ -29,6 +36,14 @@ describe("miss penalties", () => {
     expect(missesRequiredForLifeLoss(6)).toBeUndefined();
     expect(missesRequiredForLifeLoss(7)).toBe(3);
     expect(missesRequiredForLifeLoss(9)).toBe(2);
+    expect(missesRequiredForLifeLoss(10)).toBeUndefined();
     expect(missesRequiredForLifeLoss(12)).toBe(1);
+  });
+
+  it("makes every fifth level from level five a recovery round", () => {
+    expect(isRecoveryRound(4)).toBe(false);
+    expect(isRecoveryRound(5)).toBe(true);
+    expect(isRecoveryRound(10)).toBe(true);
+    expect(isRecoveryRound(11)).toBe(false);
   });
 });
