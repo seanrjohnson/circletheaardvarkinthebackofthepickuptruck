@@ -18,3 +18,7 @@ Use the mouse, a stylus, or touch to draw a self-crossing loop. Press `P`, `Esca
 Run `npm run check` for linting, formatting, unit tests, and a production build. Run `npm run test:e2e` for browser tests.
 
 The production build uses relative asset URLs and can be deployed as a static GitHub Pages site. Scores are stored locally in the browser.
+
+## Credits
+
+Music: "Cascade", Locate The Source, Moscow Idaho, 2009. [MySpace Music](https://myspace.com/locatethesource/music/songs)
